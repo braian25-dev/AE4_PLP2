@@ -3,11 +3,7 @@ package com.example.consola;
 import com.example.dominio.*;
 import com.example.excepciones.*;
 
-import com.example.persistencia.ClienteRepository;
-import com.example.persistencia.EmpleadoRepository;
-import com.example.persistencia.ProveedorRepository;
-import com.example.persistencia.CatalogoRepository;
-import com.example.persistencia.FacturaRepository;
+import com.example.persistencia.Repositorio;
 import com.example.persistencia.ExportadorTxt;
 import java.io.IOException;
 import java.time.LocalDate;
@@ -19,12 +15,12 @@ import java.util.Scanner;
 public class MenuConsola {
 
     private final Scanner scanner = new Scanner(System.in);
-    // Instancias de cada repositorio independiente
-    private final ClienteRepository clienteRepo = new ClienteRepository();
-    private final EmpleadoRepository empleadoRepo = new EmpleadoRepository();
-    private final ProveedorRepository proveedorRepo = new ProveedorRepository();
-    private final CatalogoRepository catalogoRepo = new CatalogoRepository();
-    private final FacturaRepository facturaRepo = new FacturaRepository();
+    // Repositorios que se reciben por constructor, el menú solo conoce la interfaz
+    private final Repositorio<Cliente> clienteRepo;
+    private final Repositorio<Empleado> empleadoRepo;
+    private final Repositorio<Proveedor> proveedorRepo;
+    private final Repositorio<ItemFacturable> catalogoRepo;
+    private final Repositorio<Factura> facturaRepo;
     private final ExportadorTxt exportador = new ExportadorTxt();
     private final AutorizadorARCA autorizador = new AutorizadorARCA();
 
@@ -36,6 +32,15 @@ public class MenuConsola {
     private List<ItemFacturable> catalogo = new ArrayList<>();
     private List<Factura> facturas = new ArrayList<>();
 
+    public MenuConsola(Repositorio<Cliente> clienteRepo, Repositorio<Empleado> empleadoRepo, Repositorio<Proveedor> proveedorRepo,
+                       Repositorio<ItemFacturable> catalogoRepo, Repositorio<Factura> facturaRepo) {
+        this.clienteRepo = clienteRepo;
+        this.empleadoRepo = empleadoRepo;
+        this.proveedorRepo = proveedorRepo;
+        this.catalogoRepo = catalogoRepo;
+        this.facturaRepo = facturaRepo;
+    }
+
     public void iniciar() {
         // Carga de facturas guardadas desde JSON
         try {
@@ -43,7 +48,7 @@ public class MenuConsola {
             empleados = empleadoRepo.obtenerTodos();
             proveedores = proveedorRepo.obtenerTodos();
             catalogo = catalogoRepo.obtenerTodos();
-            facturas = facturaRepo.obtenerTodas();
+            facturas = facturaRepo.obtenerTodos();
 
             // Si el sistema no tiene datos guardados en ninguna lista, inicializa datos de prueba
             if (clientes.isEmpty() && empleados.isEmpty() && catalogo.isEmpty() && facturas.isEmpty()) {
@@ -96,7 +101,7 @@ public class MenuConsola {
             empleadoRepo.guardarTodos(empleados);
             proveedorRepo.guardarTodos(proveedores);
             catalogoRepo.guardarTodos(catalogo);
-            facturaRepo.guardarTodas(facturas);
+            facturaRepo.guardarTodos(facturas);
             System.out.println("Todos los datos fueron actualizados en la carpeta datos/");
         } catch (IOException e) {
             System.out.println("Error al guardar en archivos JSON: " + e.getMessage());

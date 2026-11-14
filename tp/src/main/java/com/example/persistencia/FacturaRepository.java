@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FacturaRepository {
+public class FacturaRepository implements Repositorio<Factura> {
 
     private final ObjectMapper mapper;
     private final File archivo;
@@ -26,7 +26,8 @@ public class FacturaRepository {
         this.archivo = new File("datos/facturas.json");
     }
 
-    public void guardarTodas(List<Factura> facturas) throws IOException {
+    @Override
+    public void guardarTodos(List<Factura> facturas) throws IOException {
         if (archivo.getParentFile() != null && !archivo.getParentFile().exists()) {
             archivo.getParentFile().mkdirs();
         }
@@ -35,7 +36,8 @@ public class FacturaRepository {
               .writeValue(archivo, facturas);
     }
 
-    public List<Factura> obtenerTodas() throws IOException {
+    @Override
+    public List<Factura> obtenerTodos() throws IOException {
         if (!archivo.exists()) {
             return new ArrayList<>();
         }
