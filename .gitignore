@@ -13,3 +13,5 @@ buildNumber.properties
 
 # IDEs - VS Code
 .vscode/
+*.patch
+*.json
