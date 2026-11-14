@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CatalogoRepository {
+public class CatalogoRepository implements Repositorio<ItemFacturable> {
 
     private final ObjectMapper mapper;
     private final File archivo;
@@ -20,6 +20,7 @@ public class CatalogoRepository {
         this.archivo = new File("datos/catalogo.json");
     }
 
+    @Override
     public void guardarTodos(List<ItemFacturable> catalogo) throws IOException {
         if (archivo.getParentFile() != null && !archivo.getParentFile().exists()) {
             archivo.getParentFile().mkdirs();
@@ -29,6 +30,7 @@ public class CatalogoRepository {
               .writeValue(archivo, catalogo);
     }
 
+    @Override
     public List<ItemFacturable> obtenerTodos() throws IOException {
         if (!archivo.exists()) {
             return new ArrayList<>();

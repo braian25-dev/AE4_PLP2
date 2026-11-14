@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ProveedorRepository {
+public class ProveedorRepository implements Repositorio<Proveedor> {
 
     private final ObjectMapper mapper;
     private final File archivo;
@@ -20,6 +20,7 @@ public class ProveedorRepository {
         this.archivo = new File("datos/proveedores.json");
     }
 
+    @Override
     public void guardarTodos(List<Proveedor> proveedores) throws IOException {
         if (archivo.getParentFile() != null && !archivo.getParentFile().exists()) {
             archivo.getParentFile().mkdirs();
@@ -29,6 +30,7 @@ public class ProveedorRepository {
               .writeValue(archivo, proveedores);
     }
 
+    @Override
     public List<Proveedor> obtenerTodos() throws IOException {
         if (!archivo.exists()) {
             return new ArrayList<>();
