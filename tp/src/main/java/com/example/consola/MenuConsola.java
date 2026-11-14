@@ -618,9 +618,7 @@ public class MenuConsola {
         Empleado empleadoSeleccionado = empleados.get(idxEmpleado);
 
         // Definición del tipo de comprobante según condición IVA
-        TipoComprobante tipoComp = (clienteSeleccionado.getCondicionIVA() == CondicionIVA.RESPONSABLE_INSCRIPTO) 
-                ? TipoComprobante.FACTURA_A 
-                : TipoComprobante.FACTURA_C;
+        TipoComprobante tipoComp = clienteSeleccionado.getCondicionIVA().getTipoComprobante();
 
         int proxNro = facturas.size() + 101;
         Factura nuevaFactura = new Factura(1, proxNro, tipoComp, LocalDate.now(), clienteSeleccionado, empleadoSeleccionado, MetodoPago.EFECTIVO);
