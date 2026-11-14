@@ -10,6 +10,7 @@ import com.example.persistencia.FacturaRepository;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
 
@@ -426,6 +427,8 @@ public class MenuConsola {
         System.out.println("2. Listar Historial de Comprobantes");
         System.out.println("3. Ver Comprobante Impreso ");
         System.out.println("4. Eliminar / Anular Factura");
+        System.out.println("5. Listar Facturas Ordenadas por Número");
+        System.out.println("6. Listar Facturas Ordenadas por Monto (mayor a menor)");
         System.out.println("0. Volver al menú principal");
         System.out.print("Opción: ");
         try {
@@ -464,10 +467,37 @@ public class MenuConsola {
                 case 4 -> { eliminarFactura();
                 }
 
+                case 5 -> listarFacturasPorNumero();
+
+                case 6 -> listarFacturasPorMonto();
+
                 case 0 -> System.out.println("Volviendo al menú principal...");
             }
         } catch (Exception e) {
             System.out.println("Error procesando la venta: " + e.getMessage());
+        }
+    }
+
+    private void listarFacturasPorNumero() {
+        List<Factura> ordenadas = new ArrayList<>(facturas);
+        Collections.sort(ordenadas);
+        mostrarListaFacturas("FACTURAS ORDENADAS POR NÚMERO", ordenadas);
+    }
+
+    private void listarFacturasPorMonto() {
+        List<Factura> ordenadas = new ArrayList<>(facturas);
+        Collections.sort(ordenadas, new ComparadorFacturaPorMonto());
+        mostrarListaFacturas("FACTURAS ORDENADAS POR MONTO", ordenadas);
+    }
+
+    private void mostrarListaFacturas(String titulo, List<Factura> lista) {
+        System.out.println("\n=== " + titulo + " ===");
+        if (lista.isEmpty()) {
+            System.out.println("No hay facturas emitidas en el sistema.");
+            return;
+        }
+        for (Factura f : lista) {
+            System.out.println("N°: " + f.getPuntoVenta() + "-" + f.getNumeroComprobante() + " | Cliente: " + f.getCliente().getNombre() + " | Total: $" + f.calcularTotal());
         }
     }
 
