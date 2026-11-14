@@ -26,6 +26,7 @@ public class MenuConsola {
     private final CatalogoRepository catalogoRepo = new CatalogoRepository();
     private final FacturaRepository facturaRepo = new FacturaRepository();
     private final ExportadorTxt exportador = new ExportadorTxt();
+    private final AutorizadorARCA autorizador = new AutorizadorARCA();
 
     // Listas dinámicas globales en memoria
     private List<Cliente> clientes = new ArrayList<>();
@@ -669,8 +670,7 @@ public class MenuConsola {
         }
 
         nuevaFactura.setEstadoPago(EstadoPago.PENDIENTE);
-        String caeSimulado = String.valueOf((long) (Math.random() * 100000000000000L));
-        nuevaFactura.autorizarARCA(caeSimulado, LocalDate.now().plusDays(10), "https://www.arca.gob.ar/fe/qr/?p=eyJ2ZXJzaW9uIjoxfQ==");
+        autorizador.autorizar(nuevaFactura);
 
         facturas.add(nuevaFactura);
         clienteSeleccionado.agregarFactura(nuevaFactura);
