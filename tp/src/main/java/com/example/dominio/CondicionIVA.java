@@ -2,10 +2,20 @@ package com.example.dominio;
 
 
 public enum CondicionIVA {
-    RESPONSABLE_INSCRIPTO,
-    MONOTRIBUTO,
-    CONSUMIDOR_FINAL,
-    EXENTO,
+    RESPONSABLE_INSCRIPTO(TipoComprobante.FACTURA_A),
+    MONOTRIBUTO(TipoComprobante.FACTURA_C),
+    CONSUMIDOR_FINAL(TipoComprobante.FACTURA_C),
+    EXENTO(TipoComprobante.FACTURA_C);
+
+    private final TipoComprobante tipoComprobante;
+
+    CondicionIVA(TipoComprobante tipoComprobante) {
+        this.tipoComprobante = tipoComprobante;
+    }
+
+    public TipoComprobante getTipoComprobante() {
+        return tipoComprobante;
+    }
 }
 
 /*
