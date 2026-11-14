@@ -21,6 +21,7 @@ public class Factura implements Comparable<Factura>, Imprimible, Exportable {
     // Atributos integrados de Pago
     private MetodoPago metodoPago;
     private EstadoPago estadoPago;
+    private double montoPagado;
 
     // Atributos de Validación ARCA / AFIP (Recordemos que se tomó como ejemplo).
     private String cae;
@@ -76,6 +77,27 @@ public class Factura implements Comparable<Factura>, Imprimible, Exportable {
             throw new LimiteCreditoExcedidoExcepcion("El total ($" + this.calcularTotal() + ") excede el límite de crédito del cliente ($" + this.cliente.getLimiteCredito() + ").");
         }
         System.out.println("Factura N° " + numeroComprobante + " validada y lista para emitir.");
+    }
+
+    public double calcularSaldo() {
+        if (estadoPago == EstadoPago.CANCELADO) {
+            return 0;
+        }
+        return calcularTotal() - montoPagado;
+    }
+
+    // Registra un pago y actualiza el estado; no permite pagar más que el saldo
+    public void registrarPago(double monto) throws PagoExedenteExcepcion {
+        double saldo = calcularSaldo();
+        if (monto > saldo) {
+            throw new PagoExedenteExcepcion("El pago ($" + monto + ") supera el saldo pendiente de la factura ($" + saldo + ").");
+        }
+        montoPagado += monto;
+        if (montoPagado >= calcularTotal()) {
+            estadoPago = EstadoPago.CANCELADO;
+        } else {
+            estadoPago = EstadoPago.PARCIAL;
+        }
     }
 
     // Métodos para asignar validación simulada de ARCA
@@ -209,6 +231,16 @@ public class Factura implements Comparable<Factura>, Imprimible, Exportable {
 
     // --- ---
     
+    public double getMontoPagado() {
+        return montoPagado;
+    }
+
+    public void setMontoPagado(double montoPagado) {
+        this.montoPagado = montoPagado;
+    }
+
+    // --- ---
+
     public String getCae() { 
         return cae; 
     }
