@@ -1,6 +1,7 @@
 package com.example.consola;
 
 import com.example.dominio.*;
+import com.example.excepciones.*;
 
 import com.example.persistencia.ClienteRepository;
 import com.example.persistencia.EmpleadoRepository;
@@ -150,7 +151,7 @@ public class MenuConsola {
                 case 0 -> System.out.println("Volviendo al menú principal...");
                 default -> System.out.println("Opción inválida.");
             }
-        } catch (Exception e) {
+        } catch (NumberFormatException e) {
             System.out.println("Error en ingreso de datos.");
         }
     }
@@ -269,7 +270,7 @@ public class MenuConsola {
                 case 0 -> System.out.println("Volviendo al menú principal...");
                 default -> System.out.println("Opción inválida.");
             }
-        } catch (Exception e) {
+        } catch (NumberFormatException e) {
             System.out.println("Error en ingreso de datos.");
         }
     }
@@ -413,7 +414,7 @@ public class MenuConsola {
 
                 case 0 -> System.out.println("Volviendo al menú principal...");
             }
-        } catch (Exception e) {
+        } catch (NumberFormatException e) {
             System.out.println("Error en ingreso de datos.");
         }
     }
@@ -429,6 +430,7 @@ public class MenuConsola {
         System.out.println("4. Eliminar / Anular Factura");
         System.out.println("5. Listar Facturas Ordenadas por Número");
         System.out.println("6. Listar Facturas Ordenadas por Monto (mayor a menor)");
+        System.out.println("7. Registrar Pago de Factura");
         System.out.println("0. Volver al menú principal");
         System.out.print("Opción: ");
         try {
@@ -471,10 +473,12 @@ public class MenuConsola {
 
                 case 6 -> listarFacturasPorMonto();
 
+                case 7 -> registrarPagoFactura();
+
                 case 0 -> System.out.println("Volviendo al menú principal...");
             }
-        } catch (Exception e) {
-            System.out.println("Error procesando la venta: " + e.getMessage());
+        } catch (NumberFormatException e) {
+            System.out.println("Error en ingreso de datos.");
         }
     }
 
@@ -498,6 +502,40 @@ public class MenuConsola {
         }
         for (Factura f : lista) {
             System.out.println("N°: " + f.getPuntoVenta() + "-" + f.getNumeroComprobante() + " | Cliente: " + f.getCliente().getNombre() + " | Total: $" + f.calcularTotal());
+        }
+    }
+
+    private void registrarPagoFactura() {
+        if (facturas.isEmpty()) {
+            System.out.println("No hay facturas registradas.");
+            return;
+        }
+        for (int i = 0; i < facturas.size(); i++) {
+            Factura f = facturas.get(i);
+            System.out.println((i + 1) + ". Factura N° " + f.getPuntoVenta() + "-" + f.getNumeroComprobante() + " | Cliente: " + f.getCliente().getNombre() + " | Total: $" + f.calcularTotal() + " | Estado: " + f.getEstadoPago());
+        }
+        System.out.print("Ingrese el número de la factura a pagar: ");
+        int idx = Integer.parseInt(scanner.nextLine()) - 1;
+        if (idx < 0 || idx >= facturas.size()) {
+            System.out.println("Factura no válida.");
+            return;
+        }
+
+        Factura factura = facturas.get(idx);
+        System.out.println("Saldo pendiente: $" + factura.calcularSaldo());
+        System.out.print("Monto a pagar: ");
+        double monto = Double.parseDouble(scanner.nextLine());
+        if (monto <= 0) {
+            System.out.println("El monto debe ser mayor a cero.");
+            return;
+        }
+
+        try {
+            factura.registrarPago(monto);
+            guardarDatos();
+            System.out.println("Pago registrado. Estado de la factura: " + factura.getEstadoPago());
+        } catch (PagoExedenteExcepcion e) {
+            System.out.println("Pago rechazado: " + e.getMessage());
         }
     }
 
@@ -582,7 +620,17 @@ public class MenuConsola {
         }
 
         // 4. AUTORIZACIÓN Y GUARDADO
-        nuevaFactura.setEstadoPago(EstadoPago.CANCELADO);
+        try {
+            nuevaFactura.procesarFactura();
+        } catch (FacturaSinItemsExcepcion e) {
+            System.out.println(e.getMessage() + " Operación cancelada.");
+            return;
+        } catch (LimiteCreditoExcedidoExcepcion e) {
+            System.out.println("Venta rechazada: " + e.getMessage());
+            return;
+        }
+
+        nuevaFactura.setEstadoPago(EstadoPago.PENDIENTE);
         String caeSimulado = String.valueOf((long) (Math.random() * 100000000000000L));
         nuevaFactura.autorizarARCA(caeSimulado, LocalDate.now().plusDays(10), "https://www.arca.gob.ar/fe/qr/?p=eyJ2ZXJzaW9uIjoxfQ==");
 
@@ -612,7 +660,7 @@ public class MenuConsola {
                 case 3 -> CondicionIVA.MONOTRIBUTO;
                 default -> CondicionIVA.CONSUMIDOR_FINAL;
             };
-        } catch (Exception e) {
+        } catch (NumberFormatException e) {
             return CondicionIVA.CONSUMIDOR_FINAL;
         }
     }
@@ -637,7 +685,7 @@ public class MenuConsola {
             } else {
                 System.out.println("Índice inválido.");
             }
-        } catch (Exception e) {
+        } catch (NumberFormatException e) {
             System.out.println("Error en el ingreso.");
         }
     }
@@ -660,7 +708,7 @@ public class MenuConsola {
             } else {
                 System.out.println("Índice inválido.");
             }
-        } catch (Exception e) {
+        } catch (NumberFormatException e) {
             System.out.println("Error en el ingreso.");
         }
     }
@@ -683,7 +731,7 @@ public class MenuConsola {
             } else {
                 System.out.println("Índice inválido.");
             }
-        } catch (Exception e) {
+        } catch (NumberFormatException e) {
             System.out.println("Error en el ingreso.");
         }
     }
@@ -706,7 +754,7 @@ public class MenuConsola {
             } else {
                 System.out.println("Índice inválido.");
             }
-        } catch (Exception e) {
+        } catch (NumberFormatException e) {
             System.out.println("Error en el ingreso.");
         }
     }
@@ -729,7 +777,7 @@ public class MenuConsola {
             } else {
                 System.out.println("Índice inválido.");
             }
-        } catch (Exception e) {
+        } catch (NumberFormatException e) {
             System.out.println("Error en el ingreso.");
         }
     }
@@ -753,7 +801,7 @@ public class MenuConsola {
             } else {
                 System.out.println("Índice inválido.");
             }
-        } catch (Exception e) {
+        } catch (NumberFormatException e) {
             System.out.println("Error en el ingreso.");
         }
     }
