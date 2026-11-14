@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Cliente extends Persona {
+public class Cliente extends Persona implements Imprimible, Exportable {
 
     private double limiteCredito;
     private String categoria; // regular / premium / corporativo
@@ -82,5 +82,22 @@ public class Cliente extends Persona {
     @Override 
     public String getDetalleRol() {
        return "Rol: CLIENTE - Categoría: " + categoria + " - Límite Crédito: $" + limiteCredito;
+    }
+
+    // Ficha del cliente para mostrar por consola
+    @Override
+    public void ImprimibleTicket() {
+        System.out.println("==========================================================");
+        System.out.println("FICHA DE CLIENTE");
+        System.out.println("Nombre: " + getNombre());
+        System.out.println("DNI/CUIT: " + getDni() + " | Condición IVA: " + getCondicionIVA());
+        System.out.println("Domicilio: " + getDomicilio());
+        System.out.println(getDetalleRol());
+        System.out.println("==========================================================");
+    }
+
+    @Override
+    public String generarFilatexto() {
+        return getNombre() + ";" + getDni() + ";" + getCondicionIVA() + ";" + limiteCredito + ";" + categoria;
     }
 }

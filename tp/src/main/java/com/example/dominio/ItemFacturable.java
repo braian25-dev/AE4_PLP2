@@ -19,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 //------------------------------------------------------------------------------------------
 
 // Encapsula las propiedades de cualquier ítem (producto o servicio) que pueda ser facturado.
-public abstract class ItemFacturable {
+public abstract class ItemFacturable implements Exportable {
 
     private String codigo;
     private String nombre;
@@ -99,6 +99,11 @@ public abstract class ItemFacturable {
 
     // Método abstracto.
     public abstract String getDescripcion();
+
+    @Override
+    public String generarFilatexto() {
+        return codigo + ";" + nombre + ";" + precio + ";" + tipo;
+    }
 }
 
 
