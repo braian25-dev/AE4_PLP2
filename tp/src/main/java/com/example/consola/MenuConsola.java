@@ -8,6 +8,7 @@ import com.example.persistencia.EmpleadoRepository;
 import com.example.persistencia.ProveedorRepository;
 import com.example.persistencia.CatalogoRepository;
 import com.example.persistencia.FacturaRepository;
+import com.example.persistencia.ExportadorTxt;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -24,6 +25,7 @@ public class MenuConsola {
     private final ProveedorRepository proveedorRepo = new ProveedorRepository();
     private final CatalogoRepository catalogoRepo = new CatalogoRepository();
     private final FacturaRepository facturaRepo = new FacturaRepository();
+    private final ExportadorTxt exportador = new ExportadorTxt();
 
     // Listas dinámicas globales en memoria
     private List<Cliente> clientes = new ArrayList<>();
@@ -139,6 +141,7 @@ public class MenuConsola {
         System.out.println("2. Cargar Nuevo Producto");
         System.out.println("3. Cargar Nuevo Servicio");
         System.out.println("4. Eliminar Ítem del Catálogo");
+        System.out.println("5. Exportar Catálogo a .txt");
         System.out.println("0. Volver al menú principal");
         System.out.print("Opción: ");
         try {
@@ -148,6 +151,7 @@ public class MenuConsola {
                 case 2 -> cargarProducto();
                 case 3 -> cargarServicio();
                 case 4 -> eliminarItemCatalogo();
+                case 5 -> exportarTxt(catalogo, "exportaciones/catalogo.txt");
                 case 0 -> System.out.println("Volviendo al menú principal...");
                 default -> System.out.println("Opción inválida.");
             }
@@ -253,6 +257,8 @@ public class MenuConsola {
         System.out.println("7. Eliminar Cliente"); 
         System.out.println("8. Eliminar Empleado");
         System.out.println("9. Eliminar Proveedor");
+        System.out.println("10. Ver Ficha de Cliente");
+        System.out.println("11. Exportar Clientes a .txt");
         System.out.println("0. Volver al menú principal");
         System.out.print("Opción: ");
         try {
@@ -267,6 +273,8 @@ public class MenuConsola {
                 case 7 -> eliminarCliente(); 
                 case 8 -> eliminarEmpleado();
                 case 9 -> eliminarProveedor();
+                case 10 -> verFichaCliente();
+                case 11 -> exportarTxt(clientes, "exportaciones/clientes.txt");
                 case 0 -> System.out.println("Volviendo al menú principal...");
                 default -> System.out.println("Opción inválida.");
             }
@@ -279,6 +287,24 @@ public class MenuConsola {
         System.out.println("\n=== CLIENTES REGISTRADOS ===");
         for (Cliente c : clientes) {
             System.out.println("- " + c.getNombre() + " | DNI/CUIT: " + c.getDni() + " | IVA: " + c.getCondicionIVA());
+        }
+    }
+
+    private void verFichaCliente() {
+        if (clientes.isEmpty()) {
+            System.out.println("No hay clientes registrados.");
+            return;
+        }
+        for (int i = 0; i < clientes.size(); i++) {
+            System.out.println((i + 1) + ". " + clientes.get(i).getNombre());
+        }
+        System.out.print("Ingrese el número del cliente: ");
+        int idx = Integer.parseInt(scanner.nextLine()) - 1;
+        if (idx >= 0 && idx < clientes.size()) {
+            Imprimible ficha = clientes.get(idx);
+            ficha.ImprimibleTicket();
+        } else {
+            System.out.println("Cliente no válido.");
         }
     }
 
@@ -431,6 +457,7 @@ public class MenuConsola {
         System.out.println("5. Listar Facturas Ordenadas por Número");
         System.out.println("6. Listar Facturas Ordenadas por Monto (mayor a menor)");
         System.out.println("7. Registrar Pago de Factura");
+        System.out.println("8. Exportar Facturas a .txt");
         System.out.println("0. Volver al menú principal");
         System.out.print("Opción: ");
         try {
@@ -458,7 +485,8 @@ public class MenuConsola {
                         int idx = Integer.parseInt(scanner.nextLine()) - 1;
 
                         if (idx >= 0 && idx < facturas.size()) {
-                            facturas.get(idx).mostrarDetalle();
+                            Imprimible comprobante = facturas.get(idx);
+                            comprobante.ImprimibleTicket();
                         } else {
                             System.out.println("Opción de factura no válida.");
                         }
@@ -474,6 +502,8 @@ public class MenuConsola {
                 case 6 -> listarFacturasPorMonto();
 
                 case 7 -> registrarPagoFactura();
+
+                case 8 -> exportarTxt(facturas, "exportaciones/facturas.txt");
 
                 case 0 -> System.out.println("Volviendo al menú principal...");
             }
@@ -502,6 +532,16 @@ public class MenuConsola {
         }
         for (Factura f : lista) {
             System.out.println("N°: " + f.getPuntoVenta() + "-" + f.getNumeroComprobante() + " | Cliente: " + f.getCliente().getNombre() + " | Total: $" + f.calcularTotal());
+        }
+    }
+
+    // Sirve para cualquier lista de objetos Exportable (facturas, clientes, catálogo)
+    private void exportarTxt(List<? extends Exportable> elementos, String ruta) {
+        try {
+            exportador.exportar(elementos, ruta);
+            System.out.println("Datos exportados en " + ruta);
+        } catch (IOException e) {
+            System.out.println("Error al exportar el archivo: " + e.getMessage());
         }
     }
 
