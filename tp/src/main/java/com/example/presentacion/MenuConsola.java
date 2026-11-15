@@ -3,64 +3,48 @@ package com.example.presentacion;
 import com.example.dominio.*;
 import com.example.dominio.excepciones.*;
 
-import com.example.persistencia.Repositorio;
-import com.example.persistencia.ExportadorTxt;
+import com.example.servicio.*;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
 
 public class MenuConsola {
 
     private final Scanner scanner = new Scanner(System.in);
-    // Repositorios que se reciben por constructor, el menú solo conoce la interfaz
-    private final Repositorio<Cliente> clienteRepo;
-    private final Repositorio<Empleado> empleadoRepo;
-    private final Repositorio<Proveedor> proveedorRepo;
-    private final Repositorio<ItemFacturable> catalogoRepo;
-    private final Repositorio<Factura> facturaRepo;
-    private final ExportadorTxt exportador = new ExportadorTxt();
-    private final AutorizadorARCA autorizador = new AutorizadorARCA();
+    // Servicios que usa el menú
+    private final SistemaServicio sistema;
+    private final CatalogoServicio catalogoServicio;
+    private final PersonaServicio personaServicio;
+    private final DepartamentoServicio departamentoServicio;
+    private final FacturaServicio facturaServicio;
+    private final ExportacionServicio exportacionServicio;
 
-    // Listas dinámicas globales en memoria
-    private List<Cliente> clientes = new ArrayList<>();
-    private List<Empleado> empleados = new ArrayList<>();
-    private List<Proveedor> proveedores = new ArrayList<>();
-    private List<Departamento> departamentos = new ArrayList<>();
-    private List<ItemFacturable> catalogo = new ArrayList<>();
-    private List<Factura> facturas = new ArrayList<>();
-
-    public MenuConsola(Repositorio<Cliente> clienteRepo, Repositorio<Empleado> empleadoRepo, Repositorio<Proveedor> proveedorRepo,
-                       Repositorio<ItemFacturable> catalogoRepo, Repositorio<Factura> facturaRepo) {
-        this.clienteRepo = clienteRepo;
-        this.empleadoRepo = empleadoRepo;
-        this.proveedorRepo = proveedorRepo;
-        this.catalogoRepo = catalogoRepo;
-        this.facturaRepo = facturaRepo;
+    public MenuConsola(SistemaServicio sistema, CatalogoServicio catalogoServicio, PersonaServicio personaServicio,
+                       DepartamentoServicio departamentoServicio, FacturaServicio facturaServicio, ExportacionServicio exportacionServicio) {
+        this.sistema = sistema;
+        this.catalogoServicio = catalogoServicio;
+        this.personaServicio = personaServicio;
+        this.departamentoServicio = departamentoServicio;
+        this.facturaServicio = facturaServicio;
+        this.exportacionServicio = exportacionServicio;
     }
 
     public void iniciar() {
-        // Carga de facturas guardadas desde JSON
+        // Carga de datos guardados desde JSON
         try {
-            clientes = clienteRepo.obtenerTodos();
-            empleados = empleadoRepo.obtenerTodos();
-            proveedores = proveedorRepo.obtenerTodos();
-            catalogo = catalogoRepo.obtenerTodos();
-            facturas = facturaRepo.obtenerTodos();
-
-            // Si el sistema no tiene datos guardados en ninguna lista, inicializa datos de prueba
-            if (clientes.isEmpty() && empleados.isEmpty() && catalogo.isEmpty() && facturas.isEmpty()) {
-                System.out.println("No se encontraron archivos previos. Cargando datos por defecto...");
-                inicializarDatosPrueba();
-                guardarDatos();
-            } else {
+            if (sistema.cargarDatos()) {
                 System.out.println("Datos cargados correctamente desde la carpeta datos/");
+            } else {
+                // Si el sistema no tiene datos guardados, inicializa datos de prueba
+                System.out.println("No se encontraron archivos previos. Cargando datos por defecto...");
+                sistema.cargarDatosDePrueba();
+                guardarDatos();
             }
         } catch (IOException e) {
             System.out.println("Error al cargar los datos guardados: " + e.getMessage());
-            inicializarDatosPrueba();
+            sistema.cargarDatosDePrueba();
         }
 
         int opcion = -1;
@@ -97,45 +81,11 @@ public class MenuConsola {
 
     private void guardarDatos() {
         try {
-            clienteRepo.guardarTodos(clientes);
-            empleadoRepo.guardarTodos(empleados);
-            proveedorRepo.guardarTodos(proveedores);
-            catalogoRepo.guardarTodos(catalogo);
-            facturaRepo.guardarTodos(facturas);
+            sistema.guardarDatos();
             System.out.println("Todos los datos fueron actualizados en la carpeta datos/");
         } catch (IOException e) {
             System.out.println("Error al guardar en archivos JSON: " + e.getMessage());
         }
-    }
-
-    private void inicializarDatosPrueba() {
-        Proveedor prov1 = new Proveedor("Tech Supply S.A.", "30-11223344-5", "Av. Industrial 500", "011-44332211", CondicionIVA.RESPONSABLE_INSCRIPTO);
-        proveedores.add(prov1);
-
-        Producto prod1 = new Producto("P001", "Mouse Inalámbrico", 15000.0, "Hardware", prov1);
-        Servicio serv1 = new Servicio("S001", "Instalación de Software", 8000.0, "Soporte Técnico", prov1);
-        catalogo.add(prod1);
-        catalogo.add(serv1);
-
-        Cliente cli1 = new Cliente("Maria Gomez", "20-87654321-8", "Av. Siempreviva 742", "011-55554444", CondicionIVA.CONSUMIDOR_FINAL, 50000.0, "REGULAR");
-        clientes.add(cli1);
-
-        Departamento depSistemas = new Departamento("Sistemas y Soporte", 500000.0);
-        departamentos.add(depSistemas);
-
-        Empleado emp1 = new Empleado("Juan Perez", "20-12345678-9", "Calle Falsa 123", "011-11223344", CondicionIVA.RESPONSABLE_INSCRIPTO, 350000.0, "Técnico", LocalDate.of(2023, 3, 15), depSistemas);
-        empleados.add(emp1);
-        depSistemas.agregarEmpleado(emp1);
-        depSistemas.setResponsable(emp1);
-
-        Factura fac1 = new Factura(1, 29, TipoComprobante.FACTURA_C, LocalDate.now(), cli1, emp1, MetodoPago.TRANSFERENCIA);
-        fac1.agregarLinea(new LineaFactura(prod1, 2, 0.0));
-        fac1.agregarLinea(new LineaFactura(serv1, 1, 1000.0));
-        fac1.setEstadoPago(EstadoPago.CANCELADO);
-        fac1.autorizarARCA("74453966403949", LocalDate.now().plusDays(10), "https://www.arca.gob.ar/fe/qr/?p=eyJ2ZXJzaW9uIjoxfQ==");
-
-        facturas.add(fac1);
-        cli1.agregarFactura(fac1);
     }
 
     // =========================================================================
@@ -157,7 +107,7 @@ public class MenuConsola {
                 case 2 -> cargarProducto();
                 case 3 -> cargarServicio();
                 case 4 -> eliminarItemCatalogo();
-                case 5 -> exportarTxt(catalogo, "exportaciones/catalogo.txt");
+                case 5 -> exportarTxt(catalogoServicio.listar(), "exportaciones/catalogo.txt");
                 case 0 -> System.out.println("Volviendo al menú principal...");
                 default -> System.out.println("Opción inválida.");
             }
@@ -167,6 +117,7 @@ public class MenuConsola {
     }
 
     private void listarCatalogo() {
+        List<ItemFacturable> catalogo = catalogoServicio.listar();
         System.out.println("\n=== CATÁLOGO DE ÍTEMS ===");
         if (catalogo.isEmpty()) {
             System.out.println("No hay ítems registrados.");
@@ -178,6 +129,7 @@ public class MenuConsola {
     }
 
     private void cargarProducto() {
+        List<Proveedor> proveedores = personaServicio.listarProveedores();
         if (proveedores.isEmpty()) {
             System.out.println(" Error: Primero debe haber al menos un Proveedor registrado.");
             return;
@@ -209,11 +161,12 @@ public class MenuConsola {
         }
         Proveedor prov = proveedores.get(idxProv);
         Producto p = new Producto(cod, nom, prec, tipo, prov);
-        catalogo.add(p);
+        catalogoServicio.agregar(p);
         System.out.println("¡Producto guardado exitosamente!");
     }
 
     private void cargarServicio() {
+        List<Proveedor> proveedores = personaServicio.listarProveedores();
         if (proveedores.isEmpty()) {
                 System.out.println(" Error: Primero debe haber al menos un Proveedor registrado.");
                 return;
@@ -245,7 +198,7 @@ public class MenuConsola {
         }
         Proveedor prov = proveedores.get(idxProv);
         Servicio s = new Servicio(cod, nom, prec, tipo, prov);
-        catalogo.add(s);
+        catalogoServicio.agregar(s);
         System.out.println("¡Servicio guardado exitosamente!");
     }
 
@@ -280,7 +233,7 @@ public class MenuConsola {
                 case 8 -> eliminarEmpleado();
                 case 9 -> eliminarProveedor();
                 case 10 -> verFichaCliente();
-                case 11 -> exportarTxt(clientes, "exportaciones/clientes.txt");
+                case 11 -> exportarTxt(personaServicio.listarClientes(), "exportaciones/clientes.txt");
                 case 0 -> System.out.println("Volviendo al menú principal...");
                 default -> System.out.println("Opción inválida.");
             }
@@ -290,6 +243,7 @@ public class MenuConsola {
     }
 
     private void listarClientes() {
+        List<Cliente> clientes = personaServicio.listarClientes();
         System.out.println("\n=== CLIENTES REGISTRADOS ===");
         for (Cliente c : clientes) {
             System.out.println("- " + c.getNombre() + " | DNI/CUIT: " + c.getDni() + " | IVA: " + c.getCondicionIVA());
@@ -297,6 +251,7 @@ public class MenuConsola {
     }
 
     private void verFichaCliente() {
+        List<Cliente> clientes = personaServicio.listarClientes();
         if (clientes.isEmpty()) {
             System.out.println("No hay clientes registrados.");
             return;
@@ -315,6 +270,7 @@ public class MenuConsola {
     }
 
     private void listarEmpleados() {
+        List<Empleado> empleados = personaServicio.listarEmpleados();
         System.out.println("\n=== EMPLEADOS REGISTRADOS ===");
         for (Empleado e : empleados) {
             System.out.println("- " + e.getNombre() + " | Cargo: " + e.getPuesto() + " | Depto: " + (e.getDepartamento() != null ? e.getDepartamento().getNombre() : "Sin Asignar"));
@@ -322,6 +278,7 @@ public class MenuConsola {
     }
 
     private void listarProveedores() {
+        List<Proveedor> proveedores = personaServicio.listarProveedores();
         System.out.println("\n=== PROVEEDORES REGISTRADOS ===");
         for (Proveedor p : proveedores) {
             System.out.println("- " + p.getRazonSocial() + " | CUIT: " + p.getCuit());
@@ -343,11 +300,12 @@ public class MenuConsola {
         double lim = Double.parseDouble(scanner.nextLine());
 
         Cliente c = new Cliente(nom, dni, dom, tel, iva, lim, "NUEVO");
-        clientes.add(c);
+        personaServicio.registrarCliente(c);
         System.out.println(" ¡Cliente registrado exitosamente!");
     }
 
     private void cargarEmpleado() {
+        List<Departamento> departamentos = departamentoServicio.listar();
         if (departamentos.isEmpty()) {
             System.out.println(" Error: Cree primero un departamento para asignar al empleado.");
             return;
@@ -385,8 +343,7 @@ public class MenuConsola {
         }
         Departamento dep = departamentos.get(idxDep);
         Empleado e = new Empleado(nom, dni, dom, tel, iva, sal, puesto, LocalDate.now(), dep);
-        empleados.add(e);
-        dep.agregarEmpleado(e);
+        personaServicio.registrarEmpleado(e);
         System.out.println("¡Empleado registrado exitosamente!");
     }
 
@@ -403,7 +360,7 @@ public class MenuConsola {
         CondicionIVA iva = seleccionarCondicionIVA();
 
         Proveedor p = new Proveedor(rsoc, cuit, dom, tel, iva);
-        proveedores.add(p);
+        personaServicio.registrarProveedor(p);
         System.out.println("¡Proveedor registrado exitosamente!");
     }
 
@@ -422,7 +379,7 @@ public class MenuConsola {
             switch (op) {
                 case 1 -> {
                     System.out.println("\n=== DEPARTAMENTOS DE LA EMPRESA ===");
-                    for (Departamento d : departamentos) {
+                    for (Departamento d : departamentoServicio.listar()) {
                         System.out.println("Área: " + d.getNombre() + " | Presupuesto: $" + d.getPresupuesto() + " | Miembros: " + d.getEmpleados().size());
                     }
                 }
@@ -436,7 +393,7 @@ public class MenuConsola {
                         System.out.println("El presupuesto debe ser un monto mayor a cero.");
                         break;
                     }
-                    departamentos.add(new Departamento(nom, pres));
+                    departamentoServicio.agregar(new Departamento(nom, pres));
                     System.out.println("¡Departamento creado!");
                 }
                     default -> System.out.println("Opción inválida.");
@@ -472,11 +429,12 @@ public class MenuConsola {
                 case 1 -> emitirNuevaFactura();
                 case 2 -> {
                     System.out.println("\n=== HISTORIAL DE FACTURAS ===");
-                    for (Factura f : facturas) {
+                    for (Factura f : facturaServicio.listar()) {
                         System.out.println("N°: " + f.getPuntoVenta() + "-" + f.getNumeroComprobante() + " | Cliente: " + f.getCliente().getNombre() + " | Total: $" + f.calcularTotal() + " | CAE: " + f.getCae());
                     }
                 }
                 case 3 -> {
+                    List<Factura> facturas = facturaServicio.listar();
                     if (facturas.isEmpty()) {
                         System.out.println("No hay facturas emitidas en el sistema.");
                     } else {
@@ -509,7 +467,7 @@ public class MenuConsola {
 
                 case 7 -> registrarPagoFactura();
 
-                case 8 -> exportarTxt(facturas, "exportaciones/facturas.txt");
+                case 8 -> exportarTxt(facturaServicio.listar(), "exportaciones/facturas.txt");
 
                 case 0 -> System.out.println("Volviendo al menú principal...");
             }
@@ -519,15 +477,11 @@ public class MenuConsola {
     }
 
     private void listarFacturasPorNumero() {
-        List<Factura> ordenadas = new ArrayList<>(facturas);
-        Collections.sort(ordenadas);
-        mostrarListaFacturas("FACTURAS ORDENADAS POR NÚMERO", ordenadas);
+        mostrarListaFacturas("FACTURAS ORDENADAS POR NÚMERO", facturaServicio.listarPorNumero());
     }
 
     private void listarFacturasPorMonto() {
-        List<Factura> ordenadas = new ArrayList<>(facturas);
-        Collections.sort(ordenadas, new ComparadorFacturaPorMonto());
-        mostrarListaFacturas("FACTURAS ORDENADAS POR MONTO", ordenadas);
+        mostrarListaFacturas("FACTURAS ORDENADAS POR MONTO", facturaServicio.listarPorMonto());
     }
 
     private void mostrarListaFacturas(String titulo, List<Factura> lista) {
@@ -544,7 +498,7 @@ public class MenuConsola {
     // Sirve para cualquier lista de objetos Exportable (facturas, clientes, catálogo)
     private void exportarTxt(List<? extends Exportable> elementos, String ruta) {
         try {
-            exportador.exportar(elementos, ruta);
+            exportacionServicio.exportar(elementos, ruta);
             System.out.println("Datos exportados en " + ruta);
         } catch (IOException e) {
             System.out.println("Error al exportar el archivo: " + e.getMessage());
@@ -552,6 +506,7 @@ public class MenuConsola {
     }
 
     private void registrarPagoFactura() {
+        List<Factura> facturas = facturaServicio.listar();
         if (facturas.isEmpty()) {
             System.out.println("No hay facturas registradas.");
             return;
@@ -577,7 +532,7 @@ public class MenuConsola {
         }
 
         try {
-            factura.registrarPago(monto);
+            facturaServicio.registrarPago(factura, monto);
             guardarDatos();
             System.out.println("Pago registrado. Estado de la factura: " + factura.getEstadoPago());
         } catch (PagoExedenteExcepcion e) {
@@ -586,6 +541,9 @@ public class MenuConsola {
     }
 
     private void emitirNuevaFactura() {
+        List<Cliente> clientes = personaServicio.listarClientes();
+        List<Empleado> empleados = personaServicio.listarEmpleados();
+        List<ItemFacturable> catalogo = catalogoServicio.listar();
         if (clientes.isEmpty() || empleados.isEmpty() || catalogo.isEmpty()) {
             System.out.println(" Error: Debe registrar previamente al menos 1 Cliente, 1 Empleado y 1 Ítem en el Catálogo.");
             return;
@@ -623,11 +581,7 @@ public class MenuConsola {
         }
         Empleado empleadoSeleccionado = empleados.get(idxEmpleado);
 
-        // Definición del tipo de comprobante según condición IVA
-        TipoComprobante tipoComp = clienteSeleccionado.getCondicionIVA().getTipoComprobante();
-
-        int proxNro = facturas.size() + 101;
-        Factura nuevaFactura = new Factura(1, proxNro, tipoComp, LocalDate.now(), clienteSeleccionado, empleadoSeleccionado, MetodoPago.EFECTIVO);
+        List<LineaFactura> lineas = new ArrayList<>();
 
         // 3. CARGA DINÁMICA DE ÍTEMS
         boolean agregarMas = true;
@@ -650,7 +604,7 @@ public class MenuConsola {
                     continue; // Vuelve a pedir el ítem sin agregarlo a la factura
                 }
 
-                nuevaFactura.agregarLinea(new LineaFactura(itemSeleccionado, cantidad, 0.0));
+                lineas.add(new LineaFactura(itemSeleccionado, cantidad, 0.0));
                 System.out.println("Ítem agregado a la factura.");
             } else {
                 System.out.println("Opción de ítem no válida.");
@@ -664,8 +618,9 @@ public class MenuConsola {
         }
 
         // 4. AUTORIZACIÓN Y GUARDADO
+        Factura nuevaFactura;
         try {
-            nuevaFactura.procesarFactura();
+            nuevaFactura = facturaServicio.emitir(clienteSeleccionado, empleadoSeleccionado, lineas);
         } catch (FacturaSinItemsExcepcion e) {
             System.out.println(e.getMessage() + " Operación cancelada.");
             return;
@@ -673,12 +628,6 @@ public class MenuConsola {
             System.out.println("Venta rechazada: " + e.getMessage());
             return;
         }
-
-        nuevaFactura.setEstadoPago(EstadoPago.PENDIENTE);
-        autorizador.autorizar(nuevaFactura);
-
-        facturas.add(nuevaFactura);
-        clienteSeleccionado.agregarFactura(nuevaFactura);
 
         // Guardado automático en JSON
         guardarDatos();
@@ -713,6 +662,7 @@ public class MenuConsola {
     // =========================================================================
 
     private void eliminarItemCatalogo() {
+        List<ItemFacturable> catalogo = catalogoServicio.listar();
         if (catalogo.isEmpty()) {
             System.out.println("El catálogo está vacío.");
             return;
@@ -722,7 +672,7 @@ public class MenuConsola {
         try {
             int idx = Integer.parseInt(scanner.nextLine()) - 1;
             if (idx >= 0 && idx < catalogo.size()) {
-                catalogo.remove(idx);
+                catalogoServicio.eliminar(catalogo.get(idx));
                 guardarDatos();
                 System.out.println("Ítem eliminado correctamente.");
             } else {
@@ -734,6 +684,7 @@ public class MenuConsola {
     }
 
     private void eliminarCliente() {
+        List<Cliente> clientes = personaServicio.listarClientes();
         if (clientes.isEmpty()) {
             System.out.println("No hay clientes registrados.");
             return;
@@ -745,7 +696,7 @@ public class MenuConsola {
         try {
             int idx = Integer.parseInt(scanner.nextLine()) - 1;
             if (idx >= 0 && idx < clientes.size()) {
-                clientes.remove(idx);
+                personaServicio.eliminarCliente(clientes.get(idx));
                 guardarDatos();
                 System.out.println("Cliente eliminado correctamente.");
             } else {
@@ -757,6 +708,7 @@ public class MenuConsola {
     }
 
     private void eliminarEmpleado() {
+        List<Empleado> empleados = personaServicio.listarEmpleados();
         if (empleados.isEmpty()) {
             System.out.println("No hay empleados registrados.");
             return;
@@ -768,7 +720,7 @@ public class MenuConsola {
         try {
             int idx = Integer.parseInt(scanner.nextLine()) - 1;
             if (idx >= 0 && idx < empleados.size()) {
-                empleados.remove(idx);
+                personaServicio.eliminarEmpleado(empleados.get(idx));
                 guardarDatos();
                 System.out.println("Empleado eliminado correctamente.");
             } else {
@@ -780,6 +732,7 @@ public class MenuConsola {
     }
 
     private void eliminarProveedor() {
+        List<Proveedor> proveedores = personaServicio.listarProveedores();
         if (proveedores.isEmpty()) {
             System.out.println("No hay proveedores registrados.");
             return;
@@ -791,7 +744,7 @@ public class MenuConsola {
         try {
             int idx = Integer.parseInt(scanner.nextLine()) - 1;
             if (idx >= 0 && idx < proveedores.size()) {
-                proveedores.remove(idx);
+                personaServicio.eliminarProveedor(proveedores.get(idx));
                 guardarDatos();
                 System.out.println("Proveedor eliminado correctamente.");
             } else {
@@ -803,6 +756,7 @@ public class MenuConsola {
     }
 
     private void eliminarDepartamento() {
+        List<Departamento> departamentos = departamentoServicio.listar();
         if (departamentos.isEmpty()) {
             System.out.println("No hay departamentos registrados.");
             return;
@@ -814,7 +768,7 @@ public class MenuConsola {
         try {
             int idx = Integer.parseInt(scanner.nextLine()) - 1;
             if (idx >= 0 && idx < departamentos.size()) {
-                departamentos.remove(idx);
+                departamentoServicio.eliminar(departamentos.get(idx));
                 guardarDatos(); 
                 System.out.println("Departamento eliminado correctamente.");
             } else {
@@ -826,6 +780,7 @@ public class MenuConsola {
     }
 
     private void eliminarFactura() {
+        List<Factura> facturas = facturaServicio.listar();
         if (facturas.isEmpty()) {
             System.out.println("No hay facturas registradas.");
             return;
@@ -838,7 +793,7 @@ public class MenuConsola {
         try {
             int idx = Integer.parseInt(scanner.nextLine()) - 1;
             if (idx >= 0 && idx < facturas.size()) {
-                facturas.remove(idx);
+                facturaServicio.eliminar(facturas.get(idx));
                 guardarDatos();
                 System.out.println("Factura eliminada correctamente.");
             } else {
