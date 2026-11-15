@@ -1,4 +1,4 @@
-package com.example.excepciones;
+package com.example.dominio.excepciones;
 
 public class PagoExedenteExcepcion extends Exception {
     public PagoExedenteExcepcion(String mensaje) {

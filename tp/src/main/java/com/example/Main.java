@@ -1,6 +1,6 @@
 package com.example;
 
-import com.example.consola.MenuConsola;
+import com.example.presentacion.MenuConsola;
 import com.example.persistencia.CatalogoRepository;
 import com.example.persistencia.ClienteRepository;
 import com.example.persistencia.EmpleadoRepository;

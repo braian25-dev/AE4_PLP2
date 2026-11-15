@@ -1,7 +1,7 @@
-package com.example.consola;
+package com.example.presentacion;
 
 import com.example.dominio.*;
-import com.example.excepciones.*;
+import com.example.dominio.excepciones.*;
 
 import com.example.persistencia.Repositorio;
 import com.example.persistencia.ExportadorTxt;

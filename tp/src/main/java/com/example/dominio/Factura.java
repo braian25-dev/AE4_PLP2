@@ -4,7 +4,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.example.excepciones.*;
+import com.example.dominio.excepciones.*;
 
 // Esta clase implementa más de una interfáz a la vez (contratos transversales)
 public class Factura implements Comparable<Factura>, Imprimible, Exportable {
