@@ -3,8 +3,11 @@ package com.example.servicio;
 import com.example.dominio.AutorizadorARCA;
 import com.example.dominio.Cliente;
 import com.example.dominio.ComparadorFacturaPorMonto;
+import com.example.dominio.DescuentoPorCategoria;
+import com.example.dominio.DescuentoPorFormaPago;
 import com.example.dominio.Empleado;
 import com.example.dominio.EstadoPago;
+import com.example.dominio.EstrategiaDescuento;
 import com.example.dominio.Factura;
 import com.example.dominio.LineaFactura;
 import com.example.dominio.MetodoPago;
@@ -22,6 +25,8 @@ public class FacturaServicio {
 
     private final Repositorio<Factura> repositorio;
     private final AutorizadorARCA autorizador = new AutorizadorARCA();
+    private final EstrategiaDescuento descuentoCategoria = new DescuentoPorCategoria();
+    private final EstrategiaDescuento descuentoFormaPago = new DescuentoPorFormaPago();
     private List<Factura> facturas = new ArrayList<>();
 
     public FacturaServicio(Repositorio<Factura> repositorio) {
@@ -46,13 +51,15 @@ public class FacturaServicio {
         factura.getCliente().agregarFactura(factura);
     }
 
-    public Factura emitir(Cliente cliente, Empleado empleado, List<LineaFactura> lineas)
+    public Factura emitir(Cliente cliente, Empleado empleado, List<LineaFactura> lineas, MetodoPago metodoPago)
             throws FacturaSinItemsExcepcion, LimiteCreditoExcedidoExcepcion {
         int proxNro = facturas.size() + 101;
-        Factura factura = new Factura(1, proxNro, cliente.getCondicionIVA().getTipoComprobante(), LocalDate.now(), cliente, empleado, MetodoPago.EFECTIVO);
+        Factura factura = new Factura(1, proxNro, cliente.getCondicionIVA().getTipoComprobante(), LocalDate.now(), cliente, empleado, metodoPago);
         for (LineaFactura linea : lineas) {
             factura.agregarLinea(linea);
         }
+        factura.aplicarDescuento(descuentoCategoria);
+        factura.aplicarDescuento(descuentoFormaPago);
         factura.procesarFactura();
         factura.setEstadoPago(EstadoPago.PENDIENTE);
         autorizador.autorizar(factura);

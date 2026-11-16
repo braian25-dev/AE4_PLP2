@@ -22,6 +22,7 @@ public class Factura implements Comparable<Factura>, Imprimible, Exportable {
     private MetodoPago metodoPago;
     private EstadoPago estadoPago;
     private double montoPagado;
+    private double descuentoPorcentaje;
 
     // Atributos de Validación ARCA / AFIP (Recordemos que se tomó como ejemplo).
     private String cae;
@@ -60,12 +61,25 @@ public class Factura implements Comparable<Factura>, Imprimible, Exportable {
         this.lineas.add(new LineaFactura(item, cantidad, bonificacion));
     }
 
-    public double calcularTotal() {
-        double total = 0.0;
+    public double calcularSubtotal() {
+        double subtotal = 0.0;
         for (LineaFactura linea : lineas) {
-            total += linea.calcularSubtotal();
+            subtotal += linea.calcularSubtotal();
         }
-        return total;
+        return subtotal;
+    }
+
+    public double calcularDescuento() {
+        return calcularSubtotal() * descuentoPorcentaje / 100;
+    }
+
+    public double calcularTotal() {
+        return calcularSubtotal() - calcularDescuento();
+    }
+
+    // Suma al descuento de la factura el porcentaje que calcula la estrategia
+    public void aplicarDescuento(EstrategiaDescuento estrategia) {
+        this.descuentoPorcentaje += estrategia.calcularPorcentaje(this);
     }
 
     // Método para validar la factura y lanzar la excepción si está vacía
@@ -132,6 +146,8 @@ public class Factura implements Comparable<Factura>, Imprimible, Exportable {
         System.out.println("----------------------------------------------------------");
         System.out.println("INFORMACIÓN DE PAGO:");
         System.out.println("  Método: " + metodoPago + " | Estado: " + estadoPago);
+        System.out.printf("Subtotal: $%.2f%n", calcularSubtotal());
+        System.out.printf("Descuento (%.1f%%): -$%.2f%n", descuentoPorcentaje, calcularDescuento());
         System.out.printf("IMPORTE TOTAL: $%.2f%n", calcularTotal());
         System.out.println("----------------------------------------------------------");
         System.out.println("COMPROBANTE AUTORIZADO POR ARCA");
@@ -237,6 +253,14 @@ public class Factura implements Comparable<Factura>, Imprimible, Exportable {
 
     public void setMontoPagado(double montoPagado) {
         this.montoPagado = montoPagado;
+    }
+
+    public double getDescuentoPorcentaje() {
+        return descuentoPorcentaje;
+    }
+
+    public void setDescuentoPorcentaje(double descuentoPorcentaje) {
+        this.descuentoPorcentaje = descuentoPorcentaje;
     }
 
     // --- ---

@@ -617,10 +617,24 @@ public class MenuConsola {
             }
         }
 
-        // 4. AUTORIZACIÓN Y GUARDADO
+        // 4. FORMA DE PAGO
+        System.out.println("\n-- Seleccione la Forma de Pago --");
+        MetodoPago[] metodos = MetodoPago.values();
+        for (int i = 0; i < metodos.length; i++) {
+            System.out.println((i + 1) + ". " + metodos[i]);
+        }
+        System.out.print("Ingrese el número de la forma de pago: ");
+        int idxMetodo = Integer.parseInt(scanner.nextLine()) - 1;
+        if (idxMetodo < 0 || idxMetodo >= metodos.length) {
+            System.out.println("Forma de pago no válida. Operación cancelada.");
+            return;
+        }
+        MetodoPago metodoSeleccionado = metodos[idxMetodo];
+
+        // 5. AUTORIZACIÓN Y GUARDADO
         Factura nuevaFactura;
         try {
-            nuevaFactura = facturaServicio.emitir(clienteSeleccionado, empleadoSeleccionado, lineas);
+            nuevaFactura = facturaServicio.emitir(clienteSeleccionado, empleadoSeleccionado, lineas, metodoSeleccionado);
         } catch (FacturaSinItemsExcepcion e) {
             System.out.println(e.getMessage() + " Operación cancelada.");
             return;
