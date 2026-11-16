@@ -2,9 +2,7 @@ package com.example.persistencia;
 
 import com.example.dominio.Empleado;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -16,9 +14,7 @@ public class EmpleadoRepository implements Repositorio<Empleado> {
     private final File archivo;
 
     public EmpleadoRepository() {
-        this.mapper = new ObjectMapper();
-        this.mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        this.mapper.registerModule(new JavaTimeModule()); // Requerido por LocalDate fechaIngreso
+        this.mapper = MapeadorJson.getInstancia().getMapper();
         this.archivo = new File("datos/empleados.json");
     }
 

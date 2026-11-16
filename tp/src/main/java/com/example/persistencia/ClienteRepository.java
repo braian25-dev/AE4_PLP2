@@ -2,7 +2,6 @@ package com.example.persistencia;
 
 import com.example.dominio.Cliente;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
@@ -15,8 +14,7 @@ public class ClienteRepository implements Repositorio<Cliente> {
     private final File archivo;
 
     public ClienteRepository() {
-        this.mapper = new ObjectMapper();
-        this.mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        this.mapper = MapeadorJson.getInstancia().getMapper();
         this.archivo = new File("datos/clientes.json");
     }
 

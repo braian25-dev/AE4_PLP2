@@ -2,7 +2,6 @@ package com.example.persistencia;
 
 import com.example.dominio.ItemFacturable;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
@@ -15,8 +14,7 @@ public class CatalogoRepository implements Repositorio<ItemFacturable> {
     private final File archivo;
 
     public CatalogoRepository() {
-        this.mapper = new ObjectMapper();
-        this.mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        this.mapper = MapeadorJson.getInstancia().getMapper();
         this.archivo = new File("datos/catalogo.json");
     }
 

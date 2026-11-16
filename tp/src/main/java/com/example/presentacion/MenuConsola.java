@@ -129,26 +129,33 @@ public class MenuConsola {
     }
 
     private void cargarProducto() {
+        cargarItem(new CreadorProducto(), "Producto", "P002", "Categoría/Tipo (Hardware/Sop. Técnico)");
+    }
+
+    private void cargarServicio() {
+        cargarItem(new CreadorServicio(), "Servicio", "S002", "Especialidad/Tipo");
+    }
+
+    private void cargarItem(CreadorItem creador, String nombreItem, String ejemploCodigo, String textoTipo) {
         List<Proveedor> proveedores = personaServicio.listarProveedores();
         if (proveedores.isEmpty()) {
             System.out.println(" Error: Primero debe haber al menos un Proveedor registrado.");
             return;
         }
-        System.out.println("\n-- Carga de Nuevo Producto --");
-        System.out.print("Código (ej. P002): ");
+        System.out.println("\n-- Carga de Nuevo " + nombreItem + " --");
+        System.out.print("Código (ej. " + ejemploCodigo + "): ");
         String cod = scanner.nextLine();
         System.out.print("Nombre: ");
         String nom = scanner.nextLine();
         System.out.print("Precio: ");
         double prec = Double.parseDouble(scanner.nextLine());
-            if (prec <= 0) {
+        if (prec <= 0) {
             System.out.println("El precio debe ser mayor a cero. Carga cancelada.");
             return;
         }
-        System.out.print("Categoría/Tipo (Hardware/Sop. Técnico): ");
+        System.out.print(textoTipo + ": ");
         String tipo = scanner.nextLine();
 
-        // nueva modificación ------------------------------------------------------------------------------------------------------------------------------------------------------
         System.out.println("\n-- Seleccione el Proveedor --");
         for (int i = 0; i < proveedores.size(); i++) {
             System.out.println((i + 1) + ". " + proveedores.get(i).getRazonSocial());
@@ -160,46 +167,8 @@ public class MenuConsola {
             return;
         }
         Proveedor prov = proveedores.get(idxProv);
-        Producto p = new Producto(cod, nom, prec, tipo, prov);
-        catalogoServicio.agregar(p);
-        System.out.println("¡Producto guardado exitosamente!");
-    }
-
-    private void cargarServicio() {
-        List<Proveedor> proveedores = personaServicio.listarProveedores();
-        if (proveedores.isEmpty()) {
-                System.out.println(" Error: Primero debe haber al menos un Proveedor registrado.");
-                return;
-            }
-        System.out.println("\n-- Carga de Nuevo Servicio --");
-        System.out.print("Código (ej. S002): ");
-        String cod = scanner.nextLine();
-        System.out.print("Nombre: ");
-        String nom = scanner.nextLine();
-        System.out.print("Precio: ");
-        double prec = Double.parseDouble(scanner.nextLine());
-            if (prec <= 0) {
-                System.out.println("El precio debe ser mayor a cero. Carga cancelada.");
-                return;
-            }
-        System.out.print("Especialidad/Tipo: ");
-        String tipo = scanner.nextLine();
-
-        // nueva modificación ------------------------------------------------------------------------------------------------------------------------------------------------------
-        System.out.println("\n-- Seleccione el Proveedor --");
-        for (int i = 0; i < proveedores.size(); i++) {
-            System.out.println((i + 1) + ". " + proveedores.get(i).getRazonSocial());
-        }
-        System.out.print("Opción: ");
-        int idxProv = Integer.parseInt(scanner.nextLine()) - 1;
-        if (idxProv < 0 || idxProv >= proveedores.size()) {
-            System.out.println("Proveedor no válido. Carga cancelada.");
-            return;
-        }
-        Proveedor prov = proveedores.get(idxProv);
-        Servicio s = new Servicio(cod, nom, prec, tipo, prov);
-        catalogoServicio.agregar(s);
-        System.out.println("¡Servicio guardado exitosamente!");
+        catalogoServicio.agregar(creador.crearItem(cod, nom, prec, tipo, prov));
+        System.out.println("¡" + nombreItem + " guardado exitosamente!");
     }
 
     // =========================================================================
